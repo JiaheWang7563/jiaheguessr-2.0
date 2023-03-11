@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<!--
+ @license
+ Copyright 2019 Google LLC. All Rights Reserved.
+ SPDX-License-Identifier: Apache-2.0
+-->
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>JiaheGuessr</title>
+    <style>
+      /**
+       * @license
+       * Copyright 2019 Google LLC. All Rights Reserved.
+       * SPDX-License-Identifier: Apache-2.0
+       */
+      html,
+      body {
+          height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      button {
+        width: 150px;
+        height: 25px;
+        color: white;
+        background-color: red;
+      }
+
+      img {
+        padding-top: 10px;
+      }
+
+      #street-view {
+        height: 100%;
+      }
+        #floating-panel {
+        position: absolute;
+        top: 10px;
+        left: 7%;
+        z-index: 5;
+        background-color: #fff;
+        padding: 5px;
+        border: 1px solid #999;
+        text-align: center;
+        font-family: "Roboto", "sans-serif";
+        line-height: 30px;
+        padding-left: 10px;
+        width: 20%;
+        height: 35%;
+      }
+
+       #floating-panel {
+        margin-left: -100px;
+      }  
+
+    </style>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=default">
+
+
+
+
+    </script>
+  </head>
+  <body>
+    <div id="street-view"></div>
+
+    <script>
+
+var dict = {
+  1: 'This is Beijing, China. Specifically, Xie He Hospital, where I was born more than 20 years ago. I would move around continents as a nomadic third-culture kid starting 3 years from this point, and not stay in the same place for more than 5 years at a time.',
+  2: 'This is the central mosque in Abuja, Nigeria, where I moved to when I was 3. I had no concept of "moving"—imagine my shock when I was told that we would live here and it was not just a vacation trip.',
+  3: 'Wuse market in Abuja. I quickly adapted to the hot climate, my new British private elementary school, and the various dietary changes that accompanied the move. We shopped here for local produce.',
+  4: 'Beijing again. When I was 8, I moved back and attended elementary school. This was my favorite place to go with friends, Happy Valley Amusement Park. I especially loved the overpriced chow mein they sold.',
+  5: 'A Starbucks in Los Angeles, USA. I moved there right before middle school. I lived in koreatown and was the only Chinese kid at my predominantly Hispanic and Korean middle school. This Starbucks was my favorite to go to after school to feel like an adult.',
+  6: 'I moved to NYC after middle school and lived in midtown west. This is Port Authority, where I first took the bus to my new home with all my luggage full of anxiety and excitement. I would live here for another 4 years.',
+  7: 'A Chipotle near Penn Station in NYC. I had my first big fight with my toxic high school ex here. That terrible relationship messed up my mental health for two whole years.',
+  8:'Siam Thai Restaurant in Chicago. I had my first date with my lovely boyfriend here during freshman year of college. We had met through a game of online chess the summer before (I was in China and he was in India). Things are good.',
+  9:'The Upper West Side in NYC again. Last summer, I got an internship and returned to NYC. I stayed near Columbia, where I had access to their library and my boyfriend (who happened to live super close by).',
+  10:'Now I am back in Chicago. Let us see where the future takes me. Thanks for playing JiaheGuessr!'
+}
+
+function contextBox(key){
+  var overlay = document.createElement("div");
+
+  // set overlay styles
+  overlay.style.position = "fixed";
+  overlay.style.top = "0";
+  overlay.style.left = "0";
+  overlay.style.width = "100%";
+  overlay.style.height = "100%";
+  overlay.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+  overlay.style.zIndex = "9999";
+
+  // create a div element for the text
+  var text = document.createElement("div");
+
+  // set text styles
+  text.style.position = "absolute";
+  text.style.top = "50%";
+  text.style.left = "50%";
+  text.style.transform = "translate(-50%, -50%)";
+  text.style.color = "#fff";
+  text.style.fontSize = "2rem";
+  text.style.fontWeight = "bold";
+  text.textContent = dict[key];
+
+  // add the text to the overlay
+  overlay.appendChild(text);
+
+  // add the overlay to the body
+  document.body.appendChild(overlay);
+  return overlay
+}
+  
+// function geolocation(){
+// // check if the browser supports geolocation
+// if (navigator.geolocation) {
+//   // get the current position of the user
+//   navigator.geolocation.getCurrentPosition(showPosition);
+// } else {
+//   // if geolocation is not supported, display an error message
+//   alert("Geolocation is not supported by this browser.");
+// }
+
+// callback function to display the latitude and longitude
+// function showPosition(position) {
+//   // get the latitude and longitude from the position object
+//   const latitude = position.coords.latitude;
+//   const longitude = position.coords.longitude;
+
+// }
+
+// geolocation()
+
+  // Set the starting score of the player to 0
+      let score = 0
+      let level = 0
+      let panorama
+
+      // Set different places where the player will be spawned
+      var places = [
+      [{ lat: 39.91263588010402,  lng: 116.41748311912686 },  {country: 'Beijing'}], // Beijing Hospital
+      [{ lat: 9.060634390796489, lng: 7.489640880902453},  {country: 'Abuja'}], // Nigeria
+      [{ lat: 9.067827, lng: 7.465876},  {country: 'Abuja'}], // Nigeria
+          [{ lat: 39.86788280216312,  lng: 116.49481416460625},   {country: 'Beijing'}], // Beijing
+          [{ lat: 34.06218211412268, lng: -118.3389413893685},      {country: 'Los Angeles'}], // LA
+          [{ lat: 40.75702041842428,  lng: -73.99029351523514},  {country: 'New York'}], // port
+          [{ lat: 40.752393572161935, lng: -73.99436038113812},  {country: 'New York'}], // Chipotle New York
+          [{ lat: 41.795219, lng: -87.585047},  {country: 'Chicago'}], // Siam Chicago
+          [{ lat: 40.80020428128012,  lng: -73.96174458466234}, {country: 'New York'}], // UWS, USA
+          [{lat:41.7899122116876, lng:-87.60141895997211},{country:'Chicago'}] //crerar
+          // [{lat: position.coords.latitude, lng: position.coords.longitude}, {country: 'wherever you are'}]
+      ]
+        
+
+
+      let currentPlace = places[0]
+      let coordinates  = currentPlace[0]
+      let country = currentPlace[1].country
+
+      let reconfigure = (level, overlay) => {
+        overlay.remove()
+        document.getElementById("score").innerHTML = "Your current JiaheGuessr score is: " + score
+        currentPlace = places[level]
+        coordinates = currentPlace[0]
+        country = currentPlace[1].country
+        initialize()
+      }
+
+      const guess = () => {
+        level++
+        var guess = window.prompt("What city is this?")
+        if (guess.toLowerCase() === country.toLowerCase()) {
+          score++
+          alert("Correct! Current score: " + score)
+        } else {
+          // score = score, no extra point. does not reset to 0
+          alert("Incorrect! Current Score: " + score)
+        }
+        olay = contextBox(level)
+        setTimeout(reconfigure, 8000, level, olay)
+}
+
+      function initialize() {
+        panorama = new google.maps.StreetViewPanorama(
+          document.getElementById("street-view"),
+          {
+            position: coordinates,
+            pov: { heading: 165, pitch: 0 },
+            zoom: 1,
+          }
+        )
+      }   
+    </script>
+
+    </head>
+  <body>
+    <div id="floating-panel">
+      <h1> If you know where we are, make a guess!</h1>
+      <h2 id="score"></h2>
+      <button onclick="guess()">Guess</button>
+    </div>
+
+    <!-- Street view -->
+    <div id="street-view"></div>
+
+    <!-- Async script executes immediately and must be after any DOM elements used in callback. -->
+    <script
+       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&callback=initialize&v=weekly"
+      defer
+    ></script>
+  </body>
+
+  </body>
+</html>
